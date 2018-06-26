@@ -22,7 +22,7 @@ set +o pipefail
 DEFAULT_TAG="v0.1.0"
 
 # Git commit hash length
-DEFAULT_HASH_LENGTH="7"
+DEFAULT_HASH_LEN="7"
 
 # Regex to find last manual tag. E.g.: v0.1.2
 TAG_REGEX="v[0-9]+\.[0-9]+\.[0-9]+"
@@ -78,11 +78,9 @@ extract_git_tag() {
 # If the commit is not found, error out.
 extract_git_com() {
 	local commit_line="${1}"
-	local commit_len="${2}"
 	local commit=
 
 	commit="$( echo "${commit_line}" | awk '{print $2}' )"
-	commit="${commit:0:${commit_len}}"
 
 	if [ -z "${commit}" ]; then
 		>&2 echo "Error, no commit hash found."
@@ -99,6 +97,16 @@ num_commits_against_head() {
 	git rev-list --count ${commit}..HEAD
 }
 
+# Get the current commit in specified length
+current_commit() {
+	local commit_len="${1}"
+	local commit=
+
+	commit="$( git rev-parse HEAD )"
+	commit="${commit:0:${commit_len}}"
+	echo "${commit}"
+}
+
 
 ############################################################
 # Main Entrypoint
@@ -112,8 +120,10 @@ fi
 # Retrieve information
 COMMIT_LINE="$( get_commit_line "${TAG_REGEX}" )"
 GIT_TAG="$( extract_git_tag "${COMMIT_LINE}" "${TAG_REGEX}" "${DEFAULT_TAG}" )"
-GIT_COM="$( extract_git_com "${COMMIT_LINE}" "${DEFAULT_HASH_LENGTH}" )"
-COUNT="$( num_commits_against_head "${GIT_COM}" )"
+GIT_COM="$( extract_git_com "${COMMIT_LINE}" )"
 
 # Build new git tag
-echo "${GIT_TAG}-${COUNT}-g${GIT_COM}"
+printf "%s-%s-g%s\n" \
+	"${GIT_TAG}" \
+	"$( num_commits_against_head "${GIT_COM}" )" \
+	"$( current_commit "${DEFAULT_HASH_LEN}" )"
