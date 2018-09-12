@@ -125,7 +125,7 @@ GIT_COM="$( extract_git_com "${COMMIT_LINE}" )"
 DIFFERENCE="$( num_commits_against_head "${GIT_COM}" )"
 
 # Build new git tag
-if [ $DIFFERENCE = "0" ]; then
+if [ "${DIFFERENCE}" -eq "0" ]; then
 printf "%s\n" \
 	"${GIT_TAG}"
 else
