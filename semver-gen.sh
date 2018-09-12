@@ -65,7 +65,8 @@ extract_git_tag() {
 
 	tag="$( echo "${commit_line}" \
 		| grep -Eo "tags/${tag_regex}(\)|[[:space:]]|,)" \
-		| grep -Eo "${tag_regex}" )"
+		| grep -Eo "${tag_regex}" \
+		| head -1 )"
 
 	if [ -z "${tag}" ]; then
 		tag="${default_tag}"
@@ -121,9 +122,15 @@ fi
 COMMIT_LINE="$( get_commit_line "${TAG_REGEX}" )"
 GIT_TAG="$( extract_git_tag "${COMMIT_LINE}" "${TAG_REGEX}" "${DEFAULT_TAG}" )"
 GIT_COM="$( extract_git_com "${COMMIT_LINE}" )"
+DIFFERENCE="$( num_commits_against_head "${GIT_COM}" )"
 
 # Build new git tag
+if [ $DIFFERENCE = "0" ]; then
+printf "%s\n" \
+	"${GIT_TAG}"
+else
 printf "%s-%s-g%s\n" \
 	"${GIT_TAG}" \
-	"$( num_commits_against_head "${GIT_COM}" )" \
+	"${DIFFERENCE}" \
 	"$( current_commit "${DEFAULT_HASH_LEN}" )"
+fi
